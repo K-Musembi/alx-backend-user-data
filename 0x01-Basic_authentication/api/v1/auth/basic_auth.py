@@ -40,10 +40,10 @@ class BasicAuth(Auth):
 
         try:
             decoded_value = base64.b64decode(base64_authorization_header)
-        except Exception as e:
-            return None
 
-        return decoded_value.decode("utf-8")
+            return decoded_value.decode("utf-8")
+        except (UnicodeDecodeError, base64.binascii.Error):
+            return None
 
     def extract_user_credentials(self, decoded_base64_authorization_header:
                                  str) -> Tuple[str, str]:
@@ -95,6 +95,8 @@ class BasicAuth(Auth):
         encoded_value = self.extract_base64_authorization_header(auth_value)
         decoded_value = self.decode_base64_authorization_header(encoded_value)
         credentials = self.extract_user_credentials(decoded_value)
-        user_instance = self.user_object_from_credentials(credentials)
+
+        email, password = credentials
+        user_instance = self.user_object_from_credentials(email, password)
 
         return user_instance

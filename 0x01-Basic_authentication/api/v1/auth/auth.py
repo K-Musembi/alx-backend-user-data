@@ -29,6 +29,9 @@ class Auth:
             return None
 
         auth = request.headers.get("Authorization")
+        if auth is None:
+            return None
+
         return auth
 
     def current_user(self, request=None) -> User:
