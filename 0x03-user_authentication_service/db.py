@@ -20,7 +20,7 @@ class DB:
     def __init__(self) -> None:
         """Initialize a new DB instance
         """
-        self._engine = create_engine("sqlite:///a.db", echo=True)
+        self._engine = create_engine("sqlite:///a.db", echo=False)
         Base.metadata.drop_all(self._engine)
         Base.metadata.create_all(self._engine)
         self.__session = None
@@ -37,40 +37,32 @@ class DB:
     def add_user(self, email: str, hashed_password: str) -> User:
         """save user to database"""
         user = User(email=email, hashed_password=hashed_password)
-        session = self.__session
 
-        session.add(user)
-        session.commit()
+        self._session.add(user)
+        self._session.commit()
 
         return user
 
     def find_user_by(self, **kwargs: Dict[Any, Any]) -> User:
         """first row of users table"""
-        session = self.__session
         try:
-            user = session.query(User).filter_by(**kwargs).first()
-
+            user = self._session.query(User).filter_by(**kwargs).first()
             if user is None:
                 raise NoResultFound
             return user
-
-        except InvalidRequestError as e:
-            raise e
-        finally:
-            session.close()
+        except NoResultFound:
+            raise NoResultFound("Not found")
+        except InvalidRequestError:
+            raise InvalidRequestError("Invalid")
 
     def update_user(self, user_id: int, **kwargs: Dict[str, Any]) -> None:
         """update user attributes"""
-        user_session = self.__session
-
         try:
             user = self.find_user_by(id=user_id)
             for k, v in kwargs.items():
                 if not hasattr(user, k):
                     raise ValueError
                 setattr(user, k, v)
-            user_session.commit()
+            self._session.commit()
         except Exception as e:
             raise e
-        finally:
-            user_session.close()
